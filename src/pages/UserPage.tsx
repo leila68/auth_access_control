@@ -39,8 +39,6 @@ const UserPage = () => {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 space-y-6 p-4">
       <h1 className="text-4xl font-bold text-center text-green-600">User Page</h1>
 
-      <Button onClick={() => navigate("/auth")}>Back to Login</Button>
-
       <div className="w-full max-w-2xl">
         <h2 className="text-2xl font-bold mb-2">Events</h2>
         <ul>
@@ -75,6 +73,11 @@ const UserPage = () => {
           </ul>
         )}
       </div>
+       <div className="fixed bottom-6 left-6">
+              <Button onClick={() => navigate("/auth")}>
+                Back to Login
+              </Button>
+            </div>
     </div>
   );
 };

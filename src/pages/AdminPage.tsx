@@ -15,6 +15,7 @@ type EventUpdate = Database["public"]["Tables"]["events"]["Update"];
 const AdminPage = () => {
   const { toast } = useToast();
   const [events, setEvents] = useState<EventRow[]>([]);
+  const navigate = useNavigate();  
   const [newEvent, setNewEvent] = useState({
     event_name: "",
     location: "",
@@ -192,7 +193,13 @@ const AdminPage = () => {
           </div>
         ))}
       </div>
-      
+
+      <div className="fixed bottom-6 left-6">
+        <Button onClick={() => navigate("/auth")}>
+          Back to Login
+        </Button>
+      </div>
+
     </div>
   );
 };
