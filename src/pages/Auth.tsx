@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "../integrations/supabase/client";
+import type { Tables } from "../integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,28 +34,54 @@ const Auth = () => {
 
   const onSubmit = async (data: AuthFormData) => {
     setIsLoading(true);
+
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
+        // Sign in
+        const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
           email: data.email,
           password: data.password,
         });
 
-        if (error) throw error;
+        if (signInError) throw signInError;
+        const userId = authData.user?.id;
+        if (!userId) throw new Error("User not found");
+
+        // Get user role from typed table
+        const { data: roleData, error: roleError } = await supabase
+          .from("user_roles")
+          .select("role")
+         .eq("id", userId)
+         .single<{ id: string; role: string }>();
+
+        if (roleError || !roleData) {
+          toast({
+            title: "Login failed",
+            description: "User does not exist in database.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Redirect based on role
+        if (roleData.role === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/user");
+        }
 
         toast({
           title: "Welcome back!",
           description: "You've successfully signed in.",
         });
-        navigate("/");
+
       } else {
+        // Sign up
         const redirectUrl = `${window.location.origin}/`;
         const { error } = await supabase.auth.signUp({
           email: data.email,
           password: data.password,
-          options: {
-            emailRedirectTo: redirectUrl,
-          },
+          options: { emailRedirectTo: redirectUrl },
         });
 
         if (error) throw error;
@@ -63,7 +90,8 @@ const Auth = () => {
           title: "Account created!",
           description: "You've successfully signed up.",
         });
-        navigate("/");
+
+        navigate("/auth"); // maybe redirect to login page after signup
       }
     } catch (error: any) {
       toast({
@@ -122,11 +150,7 @@ const Auth = () => {
               )}
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading
-                ? "Loading..."
-                : isLogin
-                ? "Sign In"
-                : "Create Account"}
+              {isLoading ? "Loading..." : isLogin ? "Sign In" : "Create Account"}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
@@ -136,9 +160,7 @@ const Auth = () => {
               className="text-primary hover:underline"
               disabled={isLoading}
             >
-              {isLogin
-                ? "Don't have an account? Sign up"
-                : "Already have an account? Sign in"}
+              {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
             </button>
           </div>
         </CardContent>
