@@ -135,7 +135,7 @@ const AdminPage = () => {
 
   return (
     <div className="min-h-screen p-6 bg-gray-100">
-      <h1 className="text-4xl font-bold text-blue-600 mb-6">Admin Page - Events CRUD</h1>
+      <h1 className="text-4xl font-bold text-blue-600 mb-6">Admin Page - Events</h1>
 
       {/* Add new event */}
       <div className="mb-6 space-y-2">
