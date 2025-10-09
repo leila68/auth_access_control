@@ -46,6 +46,48 @@ export interface Database {
         };
         Relationships: [];
       };
+      user_event_registrations: {
+        Row: {
+          id: string;
+          user_id: string;
+          event_id: string;
+          receipt_url: string | null;
+          status: "selected" | "payment_pending" | "approved" | "rejected";
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          event_id: string;
+          receipt_url?: string | null;
+          status?: "selected" | "payment_pending" | "approved" | "rejected";
+          notes?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          event_id?: string;
+          receipt_url?: string | null;
+          status?: "selected" | "payment_pending" | "approved" | "rejected";
+          notes?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_event_registrations_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "user_roles";
+            referencedColumns: ["user_id"];
+          },
+          {
+            foreignKeyName: "user_event_registrations_event_id_fkey";
+            columns: ["event_id"];
+            referencedRelation: "events";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
