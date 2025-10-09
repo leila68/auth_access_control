@@ -14,8 +14,21 @@ create table if not exists user_event_registrations (
 CREATE POLICY "Admins can manage all registrations"
 ON user_event_registrations
 FOR ALL
-USING (auth.role() = 'admin')
-WITH CHECK (auth.role() = 'admin');
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM user_roles 
+    WHERE user_roles.user_id = auth.uid() 
+    AND user_roles.role = 'admin'
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM user_roles 
+    WHERE user_roles.user_id = auth.uid() 
+    AND user_roles.role = 'admin'
+  )
+);
 
 -- add policy for user
 CREATE POLICY "Users can manage their own registrations"
