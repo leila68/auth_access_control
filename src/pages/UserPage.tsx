@@ -29,7 +29,7 @@ const UserPage = () => {
   const fetchEvents = async () => {
     const { data, error } = await supabase.from("events").select("*");
     if (error) console.error("Error fetching events:", error.message);
-    else setEvents(data);
+    else setEvents(data || []);
   };
 
   // Fetch user's selected events
@@ -58,7 +58,6 @@ const UserPage = () => {
     const user = await getUser();
     if (!user) return;
 
-    // Check if already selected
     const already = myEvents.find((e) => e.event_id === event.id);
     if (already) {
       alert("You have already selected this event.");
@@ -92,14 +91,25 @@ const UserPage = () => {
 
   // Handle file upload for payment receipt
   const handleUploadReceipt = async (registration: Registration, file: File) => {
-    const user = await getUser();
-    if (!user) return;
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) {
+      console.error("Error getting session:", sessionError.message);
+      return;
+    }
+
+    const user = sessionData?.session?.user;
+    if (!user) {
+      alert("You must be logged in to upload a receipt.");
+      return;
+    }
+
     setUploading(registration.id);
 
     const filePath = `${user.id}/${registration.event_id}-${Date.now()}-${file.name}`;
-    const { error: uploadError } = await supabase.storage
-      .from("receipts") // Make sure this bucket exists
-      .upload(filePath, file);
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from("receipts")
+      .upload(filePath, file, { upsert: true });
 
     if (uploadError) {
       console.error("Upload error:", uploadError.message);
@@ -107,12 +117,26 @@ const UserPage = () => {
       return;
     }
 
+    const { data: publicUrlData } = supabase.storage.from("receipts").getPublicUrl(filePath);
+
+    if (!publicUrlData?.publicUrl) {
+      console.error("Failed to generate public URL");
+      setUploading(null);
+      return;
+    }
+    const receiptUrl = publicUrlData.publicUrl;
+
     const { error: updateError } = await supabase
       .from("user_event_registrations")
-      .update({ receipt_url: filePath, status: "payment_pending" })
-      .eq("id", registration.id);
+      .update({ receipt_url: receiptUrl, status: "payment_pending" })
+      .eq("id", registration.id)
+      .eq("user_id", user.id); // ✅ Ensure RLS allows update
 
-    if (updateError) console.error("Error updating receipt:", updateError.message);
+    if (updateError) {
+      console.error("Error updating registration:", updateError.message);
+    } else {
+      console.log("Receipt URL saved:", receiptUrl);
+    }
 
     await fetchMyEvents(user.id);
     setUploading(null);
@@ -162,8 +186,7 @@ const UserPage = () => {
                   <div className="flex-1 min-w-0">
                     <strong>{registration.event.event_name}</strong> |{" "}
                     {registration.event.location} |{" "}
-                    {registration.event.start_date} -{" "}
-                    {registration.event.end_date} |{" "}
+                    {registration.event.start_date} - {registration.event.end_date} |{" "}
                     <span className="text-blue-600 font-semibold">
                       ${registration.event.price ?? "N/A"}
                     </span>
@@ -194,19 +217,13 @@ const UserPage = () => {
                     </>
                   )}
                   {registration.status === "payment_pending" && (
-                    <span className="text-yellow-600 font-semibold">
-                      Pending Approval
-                    </span>
+                    <span className="text-yellow-600 font-semibold">Pending Approval</span>
                   )}
                   {registration.status === "approved" && (
-                    <span className="text-green-600 font-semibold">
-                      Approved ✅
-                    </span>
+                    <span className="text-green-600 font-semibold">Approved ✅</span>
                   )}
                   {registration.status === "rejected" && (
-                    <span className="text-red-600 font-semibold">
-                      Rejected ❌
-                    </span>
+                    <span className="text-red-600 font-semibold">Rejected ❌</span>
                   )}
                 </div>
               </li>
