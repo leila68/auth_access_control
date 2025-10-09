@@ -8,3 +8,18 @@ create table if not exists user_event_registrations (
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now()
 );
+
+
+--  add policy for admin
+CREATE POLICY "Admins can manage all registrations"
+ON user_event_registrations
+FOR ALL
+USING (auth.role() = 'admin')
+WITH CHECK (auth.role() = 'admin');
+
+-- add policy for user
+CREATE POLICY "Users can manage their own registrations"
+ON user_event_registrations
+FOR ALL
+USING (auth.uid() = user_id)        -- SELECT, UPDATE, DELETE
+WITH CHECK (auth.uid() = user_id);  -- INSERT, UPDATE
