@@ -25,6 +25,7 @@ const Events = () => {
     location: "",
     start_date: "",
     end_date: "",
+    price: 0, // ✅ new field for price
   });
   const [loading, setLoading] = useState(false);
 
@@ -41,7 +42,11 @@ const Events = () => {
       if (error) throw error;
       if (data) setEvents(data);
     } catch (error: any) {
-      toast({ title: "Error fetching events", description: error.message, variant: "destructive" });
+      toast({
+        title: "Error fetching events",
+        description: error.message,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -52,8 +57,13 @@ const Events = () => {
   }, []);
 
   const handleAddEvent = async () => {
-    if (!newEvent.event_name || !newEvent.location || !newEvent.start_date || !newEvent.end_date) {
-      toast({ title: "Validation Error", description: "All fields are required", variant: "destructive" });
+    const { event_name, location, start_date, end_date, price } = newEvent;
+    if (!event_name || !location || !start_date || !end_date) {
+      toast({
+        title: "Validation Error",
+        description: "All fields are required",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -61,10 +71,14 @@ const Events = () => {
       const { error } = await supabase.from("events").insert(newEvent as EventInsert);
       if (error) throw error;
       toast({ title: "Event added!" });
-      setNewEvent({ event_name: "", location: "", start_date: "", end_date: "" });
+      setNewEvent({ event_name: "", location: "", start_date: "", end_date: "", price: 0 });
       fetchEvents();
     } catch (error: any) {
-      toast({ title: "Error adding event", description: error.message, variant: "destructive" });
+      toast({
+        title: "Error adding event",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -75,7 +89,11 @@ const Events = () => {
       toast({ title: "Event deleted!" });
       fetchEvents();
     } catch (error: any) {
-      toast({ title: "Error deleting event", description: error.message, variant: "destructive" });
+      toast({
+        title: "Error deleting event",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -86,13 +104,18 @@ const Events = () => {
         ...(updates.location !== undefined && { location: updates.location }),
         ...(updates.start_date !== undefined && { start_date: updates.start_date }),
         ...(updates.end_date !== undefined && { end_date: updates.end_date }),
+        ...(updates.price !== undefined && { price: updates.price }), // ✅ handle price update
       };
       const { error } = await supabase.from("events").update(updateData).eq("id", id);
       if (error) throw error;
       toast({ title: "Event updated!" });
       fetchEvents();
     } catch (error: any) {
-      toast({ title: "Error updating event", description: error.message, variant: "destructive" });
+      toast({
+        title: "Error updating event",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -122,6 +145,13 @@ const Events = () => {
           value={newEvent.end_date}
           onChange={(e) => setNewEvent({ ...newEvent, end_date: e.target.value })}
         />
+        <Input
+          type="number"
+          step="0.01"
+          placeholder="Price (e.g., 25.00)"
+          value={newEvent.price}
+          onChange={(e) => setNewEvent({ ...newEvent, price: parseFloat(e.target.value) || 0 })}
+        />
         <Button onClick={handleAddEvent} disabled={loading}>
           {loading ? "Adding..." : "Add Event"}
         </Button>
@@ -134,11 +164,23 @@ const Events = () => {
             <div>
               <p className="font-bold">{event.event_name}</p>
               <p>{event.location}</p>
-              <p>{event.start_date} - {event.end_date}</p>
+              <p>
+                {event.start_date} - {event.end_date}
+              </p>
+              <p className="text-sm text-gray-600">💲 {event.price?.toFixed(2)}</p>
             </div>
             <div className="space-x-2">
-              <Button onClick={() => {setEditingEvent(event); setIsModalOpen(true);}}>Update</Button>
-              <Button onClick={() => handleDeleteEvent(event.id)}>Delete</Button>
+              <Button
+                onClick={() => {
+                  setEditingEvent(event);
+                  setIsModalOpen(true);
+                }}
+              >
+                Update
+              </Button>
+              <Button variant="destructive" onClick={() => handleDeleteEvent(event.id)}>
+                Delete
+              </Button>
             </div>
           </div>
         ))}
@@ -174,10 +216,21 @@ const Events = () => {
                 value={editingEvent.end_date}
                 onChange={(e) => setEditingEvent({ ...editingEvent, end_date: e.target.value })}
               />
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="Price"
+                value={editingEvent.price ?? 0}
+                onChange={(e) =>
+                  setEditingEvent({ ...editingEvent, price: parseFloat(e.target.value) || 0 })
+                }
+              />
             </div>
           )}
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+              Cancel
+            </Button>
             <Button
               onClick={async () => {
                 if (editingEvent) {
@@ -186,6 +239,7 @@ const Events = () => {
                     location: editingEvent.location,
                     start_date: editingEvent.start_date,
                     end_date: editingEvent.end_date,
+                    price: editingEvent.price ?? 0,
                   });
                   setIsModalOpen(false);
                   setEditingEvent(null);

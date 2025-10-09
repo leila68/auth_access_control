@@ -65,7 +65,7 @@ const UserPage = () => {
       return;
     }
 
-    const { data, error } = await supabase.from("user_event_registrations").insert({
+    const { error } = await supabase.from("user_event_registrations").insert({
       user_id: user.id,
       event_id: event.id,
       status: "selected",
@@ -123,17 +123,23 @@ const UserPage = () => {
       <h1 className="text-4xl font-bold text-center text-green-600">User Page</h1>
 
       {/* All Events */}
-      <div className="w-full max-w-2xl">
+      <div className="w-full max-w-4xl">
         <h2 className="text-2xl font-bold mb-2">Available Events</h2>
         <ul>
           {events.map((event) => (
-            <li key={event.id} className="border p-2 mb-2 rounded flex justify-between items-center">
-              <div>
+            <li
+              key={event.id}
+              className="border p-3 mb-2 rounded flex justify-between items-center bg-white shadow-sm hover:shadow-md transition w-full whitespace-nowrap overflow-x-auto gap-3"
+            >
+              <div className="flex-1 min-w-0">
                 <strong>{event.event_name}</strong> | {event.location} |{" "}
-                {event.start_date} - {event.end_date}
+                {event.start_date} - {event.end_date} |{" "}
+                <span className="text-blue-600 font-semibold">
+                  ${event.price ?? "N/A"}
+                </span>
               </div>
-              <Button size="sm" onClick={() => handleSelectEvent(event)}>
-                Select Event
+              <Button size="sm" className="shrink-0" onClick={() => handleSelectEvent(event)}>
+                Select
               </Button>
             </li>
           ))}
@@ -141,7 +147,7 @@ const UserPage = () => {
       </div>
 
       {/* My Events */}
-      <div className="w-full max-w-2xl mt-6">
+      <div className="w-full max-w-4xl mt-6">
         <h2 className="text-2xl font-bold mb-2">My Events</h2>
         {myEvents.length === 0 ? (
           <p>No events selected yet.</p>
@@ -150,18 +156,22 @@ const UserPage = () => {
             {myEvents.map((registration) => (
               <li
                 key={registration.id}
-                className="border p-2 mb-2 rounded flex flex-col gap-2"
+                className="border p-3 mb-2 rounded bg-white shadow-sm hover:shadow-md transition w-full whitespace-nowrap overflow-x-auto flex flex-col gap-2"
               >
-                <div className="flex justify-between items-center">
-                  <div>
+                <div className="flex justify-between items-center gap-3">
+                  <div className="flex-1 min-w-0">
                     <strong>{registration.event.event_name}</strong> |{" "}
                     {registration.event.location} |{" "}
                     {registration.event.start_date} -{" "}
-                    {registration.event.end_date}
+                    {registration.event.end_date} |{" "}
+                    <span className="text-blue-600 font-semibold">
+                      ${registration.event.price ?? "N/A"}
+                    </span>
                   </div>
                   <Button
                     size="sm"
                     variant="destructive"
+                    className="shrink-0"
                     onClick={() => handleRemoveEvent(registration.id)}
                   >
                     Remove
@@ -175,6 +185,7 @@ const UserPage = () => {
                       <Input
                         type="file"
                         accept="image/*,application/pdf"
+                        className="w-auto"
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) handleUploadReceipt(registration, file);

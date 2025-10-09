@@ -30,6 +30,7 @@ export interface Database {
           location: string;
           start_date: string;      // dates come as ISO strings
           end_date: string;
+          price: number; // new column
         };
         Insert: {
           event_name: string;
@@ -37,12 +38,14 @@ export interface Database {
           start_date: string;
           end_date: string;
           id?: string;             // optional
+          price?: number;
         };
         Update: {
           event_name?: string;
           location?: string;
           start_date?: string;
           end_date?: string;
+          price?: number; 
         };
         Relationships: [];
       };
