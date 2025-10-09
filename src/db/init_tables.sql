@@ -46,3 +46,6 @@ CREATE POLICY "Admin can modify events"
 ON public.events
 FOR ALL
 USING (auth.role() = 'admin');
+
+-- add new column for price to events table
+ALTER TABLE events ADD COLUMN price numeric(10, 2) DEFAULT 0.00;
